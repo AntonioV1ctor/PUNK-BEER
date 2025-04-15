@@ -33,11 +33,15 @@ jobs:
           name: Preparar banco de dados
           command: |
             bundle exec rails db:create
-            bundle exec rails db:schema:load
+            bundle exec rails db:migrate
             
       - run:
-          name: Executar testes
+          name: Executar testes do rails
           command: bundle exec rails test
+          
+      - run:
+          name: Executar testes do rubocop
+          command: bundle exec rubocop
           
       - store_test_results:
           path: test-results
