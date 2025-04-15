@@ -1,0 +1,57 @@
+version: 2.1
+orbs:
+  ruby: circleci/ruby@1.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/ruby:3.3.6-node
+    steps:
+      - checkout
+      
+      - restore_cache:
+          keys:
+            - v1-bundle-{{ checksum "Gemfile.lock" }}
+            - v1-bundle-
+            
+      - run:
+          name: Instalar dependências
+          command: |
+            gem install bundler
+            bundle install
+            
+      - save_cache:
+          key: v1-bundle-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+            
+      - run:
+          name: Executar Rubocop
+          command: bundle exec rubocop
+          
+      - run:
+          name: Preparar banco de dados
+          command: |
+            bundle exec rails db:create
+            bundle exec rails db:schema:load
+            
+      - run:
+          name: Executar testes
+          command: bundle exec rails test
+          
+      - store_test_results:
+          path: test-results
+          
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+
+workflows:
+  version: 2
+  test-workflow:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only:
+                - main
